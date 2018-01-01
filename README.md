@@ -26,7 +26,9 @@ re
 
 在公众号列表中添加 **搜狗微信** 能搜到的公众号id
 
+```
 accountList = ['baobeijihuaaihuahua']
+```
 
 添加后台 账号 & 员工号 & 密码
 
@@ -49,6 +51,8 @@ phantomjs = "/Users/xx/Downloads/phantomjs-2.1.1-macosx/bin/phantomjs"
 ```
 
 下载链接为 [http://phantomjs.org/download.html](http://phantomjs.org/download.html)
+
+---
 
 ```shell
 python sync.py
