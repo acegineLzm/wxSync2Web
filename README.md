@@ -64,7 +64,7 @@ python sync.py
 ### 备注
 
 1. 微信公众号文章有强校验及很短时效性，因此最简单是从搜狗微信爬取；
-2. 公众号文章为异步加载，爬虫要使用selenium库；
+2. 公众号文章为异步加载，爬虫要使用 selenium + PhantomJS；
 3. 文章图片有防盗链机制，绕过方法：
 - 在head中添加<meta name="referrer" content="never">
 - 使用第三方cdn或本地代理中转
