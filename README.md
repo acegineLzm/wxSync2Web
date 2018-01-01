@@ -25,19 +25,30 @@ re
 **修改脚本如下配置**
 
 在公众号列表中添加 **搜狗微信** 能搜到的公众号id
+
 accountList = ['baobeijihuaaihuahua']
 
 添加后台 账号 & 员工号 & 密码
+
+```
 cacct = ""
 sacct = ""
 password = ''
+```
 
 图片临时下载文件夹（可不修改）
+
+```
 LOCALPATH = '.'
+```
 
 修改phantomjs绝对路径
+
+```
 phantomjs = "/Users/xx/Downloads/phantomjs-2.1.1-macosx/bin/phantomjs"
-下载链接为 [](http://phantomjs.org/download.html)
+```
+
+下载链接为 [http://phantomjs.org/download.html](http://phantomjs.org/download.html)
 
 ```shell
 python sync.py
