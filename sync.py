@@ -2,7 +2,7 @@
 
 from selenium import webdriver
 from datetime import datetime
-import bs4, requests
+import bs4
 import os, time, sys
 import requests
 import json
@@ -19,13 +19,13 @@ accountList = ['baobeijihuaaihuahua']
 # 账号 & 员工号 & 密码
 cacct = ""
 sacct = ""
-password = ''
+password = ""
 
 # 图片临时下载文件夹
-LOCALPATH = '.'
+LOCALPATH = "."
 
 # phantomjs二进制文件绝对路径
-phantomjs = "/Users/xx/Downloads/phantomjs-2.1.1-macosx/bin/phantomjs"
+phantomjs = "/Users/xx/Downloads/tools/phantomjs-2.1.1-macosx/bin/phantomjs"
 
 base = 'https://mp.weixin.qq.com'
 query = 'http://weixin.sogou.com/weixin?type=1&s_from=input&query='
@@ -180,7 +180,7 @@ class articleSync():
         return session, token
 
     # 上传文章
-    def addArticle(self, token, session, article):
+    def addArticle(self, token, session, article, groupId):
         url = 'http://babyproject.faisco.cn/ajax/news_h.jsp?cmd=add&_nmid=null&src=0&_TOKEN='
         data = {
             "title": "",
@@ -198,7 +198,7 @@ class articleSync():
             "authMemberLevelId": "-1",
             "authCus": "false",
             "nlPictureId": "",
-            "groupIds": "[21]",
+            "groupIds": "[{}]".format(groupId),
             "attachIds": "[]"
         }
         self.headers['Cookie'] = '_FSESSIONID={};'.format(session)
@@ -220,17 +220,41 @@ desc = '''
     2. 输入文章链接自动同步
 '''
 
+item = '''
+    a. 关于宝贝计画
+    b. 产品课程
+    c. 微画展
+    d. 儿童美术教育
+    e. 画展活动
+    f. vip绘画课程
+    g. 商学院师资培训
+    h. 原创绘本推荐
+    i. 精品直播
+'''
+
 def main():
     print desc
-    select = raw_input('请选择: ')
-    if not select.isdigit():
+    select1 = raw_input('请选择功能: ')
+    print item
+    select2 = raw_input('请选择分类: ')
+    a = [chr(x) for x in range(ord('a'), ord('j'))]
+    b = [x for x in range(18,27)]
+    groups = {x:str(y) for x,y in zip(a,b)}
+    groupId = groups[select2]
+    if not select1.isdigit():
         print '[!] 输入有误'
         sys.exit()
-    elif int(select) < 1 or int(select) > 2:
+    elif int(select1) < 1 or int(select1) > 2:
         print '[!] 输入有误'
         sys.exit()
-    elif 2 == int(select):
+    elif 2 == int(select1):
         articleURL = raw_input('请输入文章链接: ')
+    if not select2.isalpha():
+        print '[!] 输入有误'
+        sys.exit()
+    elif select2 < 'a' or select2 > 'i':
+        print '[!] 输入有误'
+        sys.exit()
 
     artSpinder = articleSpider()
     artSync = articleSync()
@@ -238,7 +262,7 @@ def main():
     session, token = artSync.getCookies(cacct, sacct, password)
     if session and token:
         print '[*] 登录后台, 成功获取 session: {}  token: {}'.format(session, token)
-        if int(select) == 1:
+        if int(select1) == 1:
             for index, account in enumerate(accountList):
                 searchURL = query + account
                 accountUrl = artSpinder.getAccountURL(searchURL)
@@ -249,13 +273,14 @@ def main():
                 print '[*] 开始第{}个公众号头条文章格式化...'.format(index+1)
                 art = artSpinder.saveContent(articleURL, token, session)
                 print '[*] 格式化完成'
-                jr = artSync.addArticle(token, session, art)
+                jr = artSync.addArticle(token, session, art, groupId)
                 print '[*] 头条 "{}" {}'.format(art['title'], jr['msg'])
         else:
+
             print '[*] 开始文章格式化...'
             art = artSpinder.saveContent(articleURL, token, session)
             print '[*] 格式化完成'
-            jr = artSync.addArticle(token, session, art)
+            jr = artSync.addArticle(token, session, art, groupId)
             print '[*] 头条 "{}" {}'.format(art['title'], jr['msg'])
     else:
         print '[*] 后台登录失败'
