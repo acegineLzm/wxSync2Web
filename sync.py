@@ -14,7 +14,7 @@ reload(sys)
 sys.setdefaultencoding( "utf-8" )
 
 # 公众号列表
-accountList = ['baobeijihuaaihuahua']
+accountList = ['']
 
 # 账号 & 员工号 & 密码
 cacct = ""
@@ -25,7 +25,7 @@ password = ""
 LOCALPATH = "."
 
 # phantomjs二进制文件绝对路径
-phantomjs = "/Users/xx/Downloads/tools/phantomjs-2.1.1-macosx/bin/phantomjs"
+phantomjs = "/Users/xxx/Downloads/tools/phantomjs-2.1.1-macosx/bin/phantomjs"
 
 base = 'https://mp.weixin.qq.com'
 query = 'http://weixin.sogou.com/weixin?type=1&s_from=input&query='
@@ -111,41 +111,34 @@ class articleSpider():
         detailPage = bs4.BeautifulSoup(res.text, "lxml")
         art = {}
         parentTag = detailPage.find('div', {'id':'js_content', 'class':'rich_media_content'})
-        firstGifTag = parentTag.find('img')
+        imgLists = parentTag.find_all('img')
+        imgurls = [x.attrs['data-src'] for x in imgLists]
+        firstGifTag = imgLists[0]
         content = ''
         iu = imgUtil()
-        index = 0
+        index = 1
+        readOrginTAG = parentTag.find_all(text=re.compile(u'阅读原文'))
         for child in parentTag.children:
-            if isinstance(child, bs4.element.Tag):
-                # 去除 头gif 和 尾‘阅读原文’
-                if '阅读原文' in child.text or str(firstGifTag) in str(child):
-                    pass
-                # 替换图片链接
-                elif child.find('img'):
-                    imgURL = child.find('img')['data-src']
-                    imgLocalPath = iu.downloadsIMG(index+1, imgURL)
-                    imgSize = iu.CalcSize(imgLocalPath)
-                    imgMD5 = iu.CalcMD5(imgLocalPath)
-                    imgName = 'wx_{}.jpg'.format(index+1)
-                    # 上传服务器后获取到的图片新地址
-                    imgNewURL = iu.uploadsIMG(imgLocalPath, imgMD5, imgName, imgSize, token, session)
-                    time.sleep(10)
-                    if imgNewURL:
-                        print '[*] 后台上传第{}个图片成功, 并替换微信图片地址为服务器图片地址'.format(index+1)
-                        child.find('img')['data-src'] = imgNewURL
-                        iu.rmLocalImg(imgLocalPath)
-                        print '[*] 本地删除第{}个图片成功'.format(index+1)
-                    else:
-                        print '[!] 后台上传第{}个图片失败, 该图片已保留, 请后台手动替换'.format(index+1)
-                        # sys.exit()
-                    content += str(child)
-                    index += 1
-                else:
-                    content += str(child)
+            content += str(child)
+        content = content.replace(str(firstGifTag), '').replace('data-src', 'src')
+        for ro in readOrginTAG:
+            content = content.replace(ro, '')
+        for url in imgurls[1:]:
+            imgLocalPath = iu.downloadsIMG(index, url)
+            imgSize = iu.CalcSize(imgLocalPath)
+            imgMD5 = iu.CalcMD5(imgLocalPath)
+            imgName = 'wx_{}.jpg'.format(index)
+            # 上传服务器后获取到的图片新地址
+            imgNewURL = iu.uploadsIMG(imgLocalPath, imgMD5, imgName, imgSize, token, session)
+            time.sleep(10)
+            if imgNewURL:
+                print '[*] 上传并替换第{}个图片成功'.format(index)
+                content = content.replace(url, imgNewURL)
+                iu.rmLocalImg(imgLocalPath)
             else:
-                content += str(child)
-        # 将img标签属性data-src改为src才能正常显示
-        art['content'] = content.replace('data-src', 'src')
+                print '[!] 第{}个图片失败, 该图片已保留, 请后台手动替换'.format(index)
+            index += 1
+        art['content'] = content
         art['title'] = detailPage.title.text
         return art
 
@@ -276,7 +269,6 @@ def main():
                 jr = artSync.addArticle(token, session, art, groupId)
                 print '[*] 头条 "{}" {}'.format(art['title'], jr['msg'])
         else:
-
             print '[*] 开始文章格式化...'
             art = artSpinder.saveContent(articleURL, token, session)
             print '[*] 格式化完成'
